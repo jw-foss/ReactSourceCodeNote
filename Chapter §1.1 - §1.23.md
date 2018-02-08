@@ -195,21 +195,22 @@ React.createElement(
 // 通过调用得到的ReactElement节点对象
 var reactElementObject = {
   type: 'div',
-  key: null, 
+  key: null,
   ref: null,
   props: {
-  	className: 'parent',
+    className: 'parent',
     customProp: 'someProp',
     children: [
-  	  {
-  		type: 'span',
+      {
+        type: 'span',
         key: null,
-  		ref: null,
-  		props: { className: 'child'
-		},
-  		__owner: ReactCurrentOwner.current
-	  }
-  	]
+        ref: null,
+        props: {
+          className: 'child'
+        },
+        __owner: ReactCurrentOwner.current
+      }
+    ]
   },
   __owner: ReactCurrentOwner.current
 }
@@ -562,7 +563,7 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
 }
 ```
 
-​	透过上述代码总结一下, 在React的整个项目结构当中, 一共具有四中节点: 
+​	透过上述代码总结一下, 在React的整个项目结构当中, 一共具有种五种节点: 
 
 - 内置的DOM节点.
 - 空节点

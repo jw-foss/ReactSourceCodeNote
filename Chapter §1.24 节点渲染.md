@@ -288,3 +288,67 @@ var ReactCompositeComponent = {
   _instantiateReactComponent: null,
 }
 ```
+###### `4. 文本节点`
+
+​	当需要去构造一个文本节点时, 调用的方法:
+
+```typescript
+// instantiateReactComponent.js
+// PS: 此处的node可以是string 或 number类型 都会被视作一个文本常量
+instance = ReactHostComponent.createInstanceForText(node);
+```
+
+**Refer to:**
+
+- **[ReactHostComponent.js](https://github.com/facebook/react/blob/v15.6.2/src/renderers/shared/stack/reconciler/ReactHostComponent.js)**
+- **[ReactDOMTextComponent.js](https://github.com/facebook/react/blob/v15.6.2/src/renderers/dom/shared/ReactDOMTextComponent.js)**
+
+```typescript
+// ReactHostComponent.js
+// 与内置的DOM节点一样, 文本节点同样是
+// 通过ReactInjection来注入构造工厂
+ ReactInjection.HostComponent.injectTextComponentClass(ReactDOMTextComponent);
+
+// ------------------------ 我是分割线 --------------------- //
+// ReactDOMTextCompoent.js
+
+var ReactDOMTextComponent = function(text) {
+  // TODO: This is really a ReactText (ReactNode), not a ReactElement
+  this._currentElement = text;
+  this._stringText = '' + text;
+  // ReactDOMComponentTree uses these:
+  this._hostNode = null;
+  this._hostParent = null;
+
+  // Properties
+  this._domID = 0;
+  this._mountIndex = 0;
+  this._closingComment = null;
+  this._commentNodes = null;
+};
+// 接着丰富ReactDOMTextComponent的类方法
+Object.assign(ReactDOMTextComponent, {
+  mountComponent() {}, // 渲染挂载html
+  receiveComponent() {}, // 更新text
+  getHostNode() {}, // 获取挂载节点
+  unmountComponent() {} // 销毁节点
+});
+```
+###### `总结:`
+
+​	从以上四种React支持的Component类中不难看出, 所有的类几乎都有以下几个方法:
+
+```typescript
+class ReactBaseComponent {
+  mountComponent() {}, //负责节点的挂载与渲染
+  receiveComponent() {}, // 负责节点更新
+  getHostNode() {}, // 负责获取挂载点
+  unmountComponent() {} // 负责销毁节点
+}
+
+//所有的Component都能从ReactBaseComponent继承通过自身特点来强化
+```
+
+​	而实际上"真正"拥有生命周期的节点类型是`内置DOM节点`和`用户自定义节点`. 对于这些钩子方法的调用, 会在后面介绍到
+
+![ReactComponentType](https://github.com/JeremyWuuuuu/ReactSourceCodeNote/blob/master/ReactComponentType.png)

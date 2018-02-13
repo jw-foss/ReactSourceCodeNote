@@ -259,7 +259,7 @@ function mountComponentIntoNode(
 
 ###### `§1.3.4 ReactUpdates`
 **Refer to:**
-**[ReactUpdates.js](https://github.com/facebook/react/blob/v15.6.2/src/renderers/shared/stack/reconciler/ReactUpdates.js) **
+**[ReactUpdates.js](https://github.com/facebook/react/blob/v15.6.2/src/renderers/shared/stack/reconciler/ReactUpdates.js)**
 
 ```typescript
 // ReactUpdates.batchedUpdates

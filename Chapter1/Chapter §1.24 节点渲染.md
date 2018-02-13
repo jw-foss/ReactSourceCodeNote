@@ -192,7 +192,7 @@ class ReactDOMComponent {
 
 ​	对于现在的前端开发者而言, 组件化几乎是所有使用框架的开发者都能想到并且一直在做的一件事情, 那么对于React这个框架而言, 它是怎么来处理和渲染用户自定的节点的.
 
-**Refer to **
+**Refer to**
 
 **[ReactCompositeComponent.js](https://github.com/facebook/react/blob/v15.6.2/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js)**
 

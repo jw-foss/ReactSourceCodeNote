@@ -316,7 +316,7 @@ var setState = function(partialState, callback) {
 
 
 
-​	先抛开`setState`背后的故事, `setState`实际上是通过一系列操作来调取Component实例上的`updateComponent`方法, 让我们来看一下具体的实现.
+​	先抛开`   setState`背后的故事, `setState`实际上是通过一系列操作来调取Component实例上的`updateComponent`方法, 让我们来看一下具体的实现.
 
 ##### 2) `<void>updateComponent`
 

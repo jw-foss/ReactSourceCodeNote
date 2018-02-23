@@ -1,4 +1,4 @@
-### §2.2 React的事务机制
+# §2.2 React的事务机制
 
 #### § 2.2.1 事务的原理
 
@@ -31,7 +31,7 @@
 
 ​   这张图其实已经可以解释得很清楚了, React当中采用事务处理实际上就是采用Wrapper把要调用的方法包裹起来,  在调用方法之前, 先把包裹层(initialize)方法调用, 然后再到调用方法本身, 最后在结束时, 调用包裹层(close)方法, 在这里这个处理跟[underscore](http://underscorejs.org/)的`_.before`, `_.after`有些类似, 也可以理解为方法的**劫持调用**.下面 我们来具体看一看实现过程.
 
-​	首先来看一看对Transaction类的接口类定义, 这里没有具体方法, 所以方法里面内容省略.(PS: 源文件当中并不是采取这种写法, 我通过这种写法来更简单一点介绍方法的具体用处).
+​   首先来看一看对Transaction类的接口类定义, 这里没有具体方法, 所以方法里面内容省略.(PS: 源文件当中并不是采取这种写法, 我通过这种写法来更简单一点介绍方法的具体用处).
 
 ```typescript
 interface TransactionImpl {
@@ -46,7 +46,7 @@ interface TransactionImpl {
 }
 ```
 
-​	`batchUpdate`的`transaction` 在**ReactDefaultBatchingStrategy.js**中实现了Transaction
+​   `batchUpdate`的`transaction` 在**ReactDefaultBatchingStrategy.js**中实现了Transaction
 
 ```typescript
 // 实际上类上是有部分实现的, 只不过我在这里没有写清楚具体实现过程, 把方法的用处写了出来
@@ -78,7 +78,7 @@ class ReactDefaultBatchingStrategyTransaction implements TransactionImpl {
 }
 // 这个transaction的调用在下面👇
 var transaction: ReactDefaultBatchingStrategyTransaction = new ReactDefaultBatchingStrategyTransaction();
-// 当在调用这个transaction.perform方法的时候实际上是这样的: 
+// 当在调用这个transaction.perform方法的时候实际上是这样的:
 /**
  *
  *
@@ -94,7 +94,7 @@ var transaction: ReactDefaultBatchingStrategyTransaction = new ReactDefaultBatch
  */
 ```
 
-​	从这上面的调用不难看出, 由于两个`initialize`调用实际上都是对一个`emptyFunc`的调用并不起任何作用, 而`REST_BATCHED_UPDATES.close` 的作用就是把标识符复位, 所以主要的过程是发生在这个`FLUSH_BATCHED_UPDATES.close`中的, 下面来看一看这个close方法里面的调用过程:
+​   从这上面的调用不难看出, 由于两个`initialize`调用实际上都是对一个`emptyFunc`的调用并不起任何作用, 而`REST_BATCHED_UPDATES.close` 的作用就是把标识符复位, 所以主要的过程是发生在这个`FLUSH_BATCHED_UPDATES.close`中的, 下面来看一看这个close方法里面的调用过程:
 
 ```typescript
 // close指向
@@ -106,7 +106,7 @@ var flushBatchedUpdates = function(): void {
   // array and perform any updates enqueued by mount-ready handlers (i.e.,
   // componentDidUpdate) but we need to check here too in order to catch
   // updates enqueued by setState callbacks and asap calls.
-  
+
   while (dirtyComponents.length || asapEnqueued) {
     if (dirtyComponents.length) {
       // 从事务池里拿到事务
@@ -117,7 +117,7 @@ var flushBatchedUpdates = function(): void {
       // 把事务储存在事务池中
       ReactUpdatesFlushTransaction.release(transaction);
     }
-	// 提前完成回调过程, 暂时不做详细解释
+  // 提前完成回调过程, 暂时不做详细解释
     if (asapEnqueued) {
       asapEnqueued = false;
       var queue = asapCallbackQueue;
@@ -127,8 +127,11 @@ var flushBatchedUpdates = function(): void {
     }
   }
 };
+
 ```
+
 具体的处理发生在`transaction.perform(runBatchedUpdates, null, transaction)`中间, 接着来看一看`runBatchedUpdates`方法做了哪些微小的贡献🙂
+
 ```typescript
 function runBatchedUpdates(transaction: ReactUpdatesFlushTransaction): void {
   var len: number = transaction.dirtyComponentsLength;
@@ -212,6 +215,7 @@ function mountOrderComparator(c1, c2) {
 }
 
 ```
+
 接着重点部分是`runBatchedUpdates`方法中对于`ReactReconciler.performUpdateIfNecessary`的调用:
 
 ```typescript
@@ -248,8 +252,9 @@ performUpdateIfNecessary = function(
       }
     }
   }
+
 ```
- 
+
 稍微来看一下ReactCompositeComponent 当中的performUpdateIfNecessary方法
 
 ```typescript
@@ -273,13 +278,14 @@ performUpdateIfNecessary = function(
         this._context,
         this._context,
       );
-    // 
     } else {
       this._updateBatchNumber = null;
     }
 }
 ```
+
 至此更新操作基本算是结束了, 但是细心的你应该会有疑问, 这些方法里面根本就没有把**dirtyComponent**这个数组长度减少的代码, 这也是正要讲的一个点, 刚才在`transaction.perform`中也讲到了, 此处的transaction是另外一种transaction的对象, 拥有的事务处理与之前的**ReactReconcilerTransaction**不同, 而是**ReactUpdatesFlushTransaction**的实例, 毫无疑问的是, 这个事务操作里当然会有涉及到把**dirtyComponents**队列清空的操作, 还有一些其他的操作:
+
 ```typescript
 // 调用顺序:
 /**
@@ -328,7 +334,6 @@ var UPDATE_QUEUEING = {
 var TRANSACTION_WRAPPERS = [NESTED_UPDATES, UPDATE_QUEUEING];
 ```
 
-
 ​     [上一章](./Chapter §2.1 生命周期.md)我们了解到了`setState`方法实际上就是调用了`this.updater.enqueueSetState`, 那么我们来看看这个`enqueueSetState`方法到底是个什么东西, 在这背后到底发生了什么.
 
 首先关于`this.updater`这个对象是在组件挂载阶段的时候被赋值的
@@ -338,7 +343,7 @@ var TRANSACTION_WRAPPERS = [NESTED_UPDATES, UPDATE_QUEUEING];
 // ReactReconcileTransaction
 ReactReconcileTransaction.prototype.getUpdateQueue = function() {
   return ReactUpdateQueue;
-} 
+}
 
 // ReactCompositeComponent.mountComponent
 
@@ -365,35 +370,35 @@ this.updater.enqueueSetState();
  *
 ```
 
-`ReactUpdateQueue.enqueueSetState` 
+`ReactUpdateQueue.enqueueSetState`
 
 ```typescript
 ReactUpdateQueue.enqueueSetState = function(publicInstance, partialState) {
-	// ... 开发警告
-  
+  // ... 开发警告
+
     // 拿到实例
-  	// 补充说一下此处的publicInstance 和 internalInstance的区别
-  	// publicInstance 实际上是Component本身
+    // 补充说一下此处的publicInstance 和 internalInstance的区别
+    // publicInstance 实际上是Component本身
     // internalInstance 实际上是被ReactCompositeComponentWrapper 包装过的Component
-  	// 比如有这样一个Component: App;
+    // 比如有这样一个Component: App;
     // publicInstance instanceOf ReactCompositeComponent
     // internalInstance instanceOf ReactCompositeComponentWrapper
     var internalInstance = getInternalInstanceReadyForUpdate(
       publicInstance,
       'setState',
     );
-	// 中断后续操作
+  // 中断后续操作
     if (!internalInstance) {
       return;
     }
-	// 推入internalInstance的_pendingStateQueue队列
+  // 推入internalInstance的_pendingStateQueue队列
     var queue =
       internalInstance._pendingStateQueue ||
       (internalInstance._pendingStateQueue = []);
     queue.push(partialState);
-  
-	// 推入一个全局队列等待执行
-	// 把这个实例对象推入队列中, 会在后面直接拿到需要更新的对象获取这些对象上的
+
+  // 推入一个全局队列等待执行
+  // 把这个实例对象推入队列中, 会在后面直接拿到需要更新的对象获取这些对象上的
     // _pendingStateQueue调用.
     // 对ReactUpdates.enqueueUpdate调用
     enqueueUpdate(internalInstance);
@@ -430,7 +435,7 @@ var enqueueUpdate = function(component) {
 }
 // batchingStrategy.batchedUpdates
 var batchedUpdates = function(callback, a, b, c, d, e) {
-    
+
   var alreadyBatchingUpdates = ReactDefaultBatchingStrategy.isBatchingUpdates;
 
   ReactDefaultBatchingStrategy.isBatchingUpdates = true;
@@ -448,13 +453,15 @@ var batchedUpdates = function(callback, a, b, c, d, e) {
 }
 ```
 
-所以在这里做一个总体概括解释: 
+所以在这里做一个总体概括解释:
 
 在React 组件的存在阶段, 一旦触发了任何使得Component必须要被更新的操作, 例如调用了`setState`方法, 那么此刻`setState`就会通过调用类成员里的`updater.enqueueSetState`方法, 该方法一共做了两件事:
+
   1. 对React Component类成员中的_pendingStateQueue 数组里面推入了这个新的state.
   2. 调用了enqueueUpdate方法.
 
-`enqueueUpdate`方法: 
+`enqueueUpdate`方法:
+
 1. 首先会将**isBatchingUpdates**标记为**true**, 然后此时通过事务调用`enqueueUpdate`自身.
 2. 当事务调用启动时, 调用`enqueueUpdate`就会向**dirtyComponents**中**push**需要更新的<u>**Component**</u>
 3. 当这段调用结束, 就会执行事务的`FLUSH_BATCHED_UPDATES.close`方法,该方法通过调用`ReactUpdates.flushBatchedUpdates`方法来调用`runBatchedUpdates`方法 

@@ -338,7 +338,7 @@ var TRANSACTION_WRAPPERS = [NESTED_UPDATES, UPDATE_QUEUEING];
 
 #### § 2.2.3 关于`setState`的背后
 
-  [上一章](./Chapter §2.1 生命周期.md)我们了解到了`setState`方法实际上就是调用了`this.updater.enqueueSetState`, 那么我们来看看这个`enqueueSetState`方法到底是个什么东西, 在这背后到底发生了什么.
+  [上一章](https://github.com/JeremyWuuuuu/ReactSourceCodeNote/blob/master/Chapter2/Chapter%20%C2%A72.1%20%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F.md)我们了解到了`setState`方法实际上就是调用了`this.updater.enqueueSetState`, 那么我们来看看这个`enqueueSetState`方法到底是个什么东西, 在这背后到底发生了什么.
 
 首先关于`this.updater`这个对象是在组件挂载阶段的时候被赋值的
 

@@ -130,7 +130,7 @@ var flushBatchedUpdates = function(): void {
 
 ```
 
-具体的处理发生在`transaction.perform(runBatchedUpdates, null, transaction)`中间, 接着来看一看`runBatchedUpdates`方法做了哪些微小的贡献🙂
+具体的处理发生在`transaction.perform(runBatchedUpdates, null, transaction)`中间, 接着来看一看`runBatchedUpdates`方法做了哪些微小的贡献🙂
 
 ```typescript
 function runBatchedUpdates(transaction: ReactUpdatesFlushTransaction): void {
@@ -224,8 +224,8 @@ performUpdateIfNecessary = function(
     transaction,
     updateBatchNumber,
   ): void {
-    // 比对updateBatchNumber, 注意这个地方刚刚说到的
-    // updateBatchNumber就是一个更新队列的标志, 属于同一批次的更新
+    // 比对updateBatchNumber, 注意这个地方刚刚说到的
+    // updateBatchNumber就是一个更新队列的标志, 属于同一批次的更新
     // 该对象的值是一样的
     if (internalInstance._updateBatchNumber !== updateBatchNumber) {
       // The component's enqueued batch number should always be the current
@@ -244,11 +244,11 @@ performUpdateIfNecessary = function(
       // ...开发阶段代码
     }
      // 调用组件中的performUpdateIfNecessary方法
-     // 关于internalInstance请看下面👇
-     // ⌘ + F or ctrl + F 搜索 ReactUpdateQueue.enqueueSetState
+     // 关于internalInstance请看下面👇
+     // ⌘ + F or ctrl + F 搜索 ReactUpdateQueue.enqueueSetState
     internalInstance.performUpdateIfNecessary(transaction);
     if (__DEV__) {
-      // ...开发警告代码
+      // ...开发警告代码
       }
     }
   }
@@ -258,9 +258,9 @@ performUpdateIfNecessary = function(
 稍微来看一下ReactCompositeComponent 当中的performUpdateIfNecessary方法
 
 ```typescript
-performUpdateIfNecessary = function(): void {
-    // 检查是否有处在等待队列中的Element, 如果有的话调用ReactReconciler.receiveComponent
-    // 对组件更新
+performUpdateIfNecessary = function(): void {
+    // 检查是否有处在等待队列中的Element, 如果有的话调用ReactReconciler.receiveComponent
+    // 对组件更新
     if (this._pendingElement != null) {
       ReactReconciler.receiveComponent(
         this,
@@ -268,8 +268,8 @@ performUpdateIfNecessary = function(
         transaction,
         this._context,
       );
-    // 如果没有处在等待队列的Element, 切状态等待队列并不为空或者强制更新队列不为空
-    // 调用组件本身updateComponent
+    // 如果没有处在等待队列的Element, 且状态等待队列并不为空或者强制更新队列不为空
+    // 调用组件本身updateComponent
     } else if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
       this.updateComponent(
         transaction,
@@ -302,10 +302,10 @@ var NESTED_UPDATES = {
     this.dirtyComponentsLength = dirtyComponents.length;
   },
   close: function() {
-    // 对比队列长度是否与保存的一致
-    // 由于钩子函数componentDidUpdate 当中有可能会有更新调用导致
-    // dirtyComponents 长度不一致如果在这中间有设置则递归调用flushBatchedUpdates方法
-    // 若长度一致, 则清空整个更新队列
+    // 对比队列长度是否与保存的一致
+    // 由于钩子函数componentDidUpdate 当中有可能会有更新调用导致
+    // dirtyComponents 长度不一致如果在这中间有设置则递归调用flushBatchedUpdates方法
+    // 若长度一致, 则清空整个更新队列
     if (this.dirtyComponentsLength !== dirtyComponents.length) {
       // Additional updates were enqueued by componentDidUpdate handlers or
       // similar; before our own UPDATE_QUEUEING wrapper closes, we want to run
@@ -322,11 +322,11 @@ var NESTED_UPDATES = {
 
 var UPDATE_QUEUEING = {
   initialize: function() {
-    // 初始化回调队列
+    // 初始化回调队列
     this.callbackQueue.reset();
   },
   close: function() {
-    // 调用队列中所有的回调函数, 并清空队列
+    // 调用队列中所有的回调函数, 并清空队列
     this.callbackQueue.notifyAll();
   },
 };
@@ -455,22 +455,22 @@ var batchedUpdates = function(callback, a, b, c, d, e) {
 
 所以在这里做一个总体概括解释:
 
-在React 组件的存在阶段, 一旦触发了任何使得Component必须要被更新的操作, 例如调用了`setState`方法, 那么此刻`setState`就会通过调用类成员里的`updater.enqueueSetState`方法, 该方法一共做了两件事:
+	在React 组件的存在阶段, 一旦触发了任何使得Component必须要被更新的操作, 例如调用了`setState`方法, 那么此刻`setState`就会通过调用类成员里的`updater.enqueueSetState`方法, 该方法一共做了两件事:
 
-  1. 对React Component类成员中的_pendingStateQueue 数组里面推入了这个新的state.
-  2. 调用了enqueueUpdate方法.
+    1. 对React Component类成员中的_pendingStateQueue 数组里面推入了这个新的state.
+    2. 调用了enqueueUpdate方法.
 
 `enqueueUpdate`方法:
 
-1. 首先会将**isBatchingUpdates**标记为**true**, 然后此时通过事务调用`enqueueUpdate`自身.
-2. 当事务调用启动时, 调用`enqueueUpdate`就会向**dirtyComponents**中**push**需要更新的<u>**Component**</u>
-3. 当这段调用结束, 就会执行事务的`FLUSH_BATCHED_UPDATES.close`方法,该方法通过调用`ReactUpdates.flushBatchedUpdates`方法来调用`runBatchedUpdates`方法 
-
-4. `runBatchedUpdates`方法被通过事务调用: 
+1. 首先会将**isBatchingUpdates**标记为**true**, 然后此时通过事务调用`enqueueUpdate`自身.
+2. 当事务调用启动时, 调用`enqueueUpdate`就会向**dirtyComponents**中**push**需要更新的<u>**Component**</u>
+3. 当这段调用结束, 就会执行事务的`FLUSH_BATCHED_UPDATES.close`方法,该方法通过调用`ReactUpdates.flushBatchedUpdates`方法来调用`runBatchedUpdates`方法
+4. `runBatchedUpdates`方法被通过事务调用:
     1. 初始化阶段保存更新队列长度(为后面的递归调用做准备), 清零回调函数队列
-    2. `runBatchedUpdates`方法调用: 
+    2. `runBatchedUpdates`方法调用:
         * 调用需要更新组件上的`UpdateComponent`方法
         * 向回调函数队列中推入回调函数等待调用
-    3. 结束阶段检查是否有新的更新被推入, 如果有则通过递归调用继续更新如果没有则调用回调函数队列中的所有回调.
-5. 当这段方法结束通过把`isBathingUpdates`标识符重置来结束更新操作.
-6. 至此, 整个更新操作结束.
+    3. 结束阶段检查是否有新的更新被推入, 如果有则通过递归调用继续更新如果没有则调用回调函数队列中的所有回调.
+5. 当这段方法结束通过把`isBathingUpdates`标识符重置来结束更新操作.
+6. 至此, 整个更新操作结束.
+

@@ -124,7 +124,7 @@ ReactDOMComponent.mountComponent = function () {
 }
 ```
 
-​    通过这段调用之后, 这些对应的**Lisenters**在**ReactDOMCOmponent._updateDOMProperties**当中注册并保存, 接下来看一看这个方法里面发生了些什么东西.
+​    通过这段调用之后, 这些对应的**Lisenters**在**ReactDOMComponent._updateDOMProperties**当中注册并保存, 接下来看一看这个方法里面发生了些什么东西.
 
 `ReactDOMCOmponent._updateDOMProperties`
 
@@ -210,9 +210,7 @@ inst: ReactCompositeElementWrapper,
   if (transaction instanceof ReactServerRenderingTransaction) {
     return;
   }
-  if (__DEV__) {
-   // ... 省略代码
-  }
+  // ..开发阶段代码
   var containerInfo = inst._hostContainerInfo;
   var isDocumentFragment =
     containerInfo._node && containerInfo._node.nodeType === DOC_FRAGMENT_TYPE;
@@ -232,107 +230,118 @@ inst: ReactCompositeElementWrapper,
 
 这个方法一共做了两个微小的操作: 
 
-1. 通过调用**listenTo**方法在**document**上挂载了事件
+1. 通过调用**listenTo**方法在**document**上注册了事件
 2. 将事件通过事务调用**putListener**储存放进了存储池内.
 
-接下来一个一个方法来看: 
+接下来一个一个方法来看, 首先是**listenTofa**方法: 
 
 ```typescript
+// 值得注意的事情是, 事件真正的处理并未在此处发生
+// 而是在putListener当中才做好了挂载
 var listenTo = function(
-registrationName: string,
-contentDocumentHandle: HTMLElement): void {
-  // 挂载点
-  var mountAt = contentDocumentHandle;
-    // 
+	registrationName: string, // 合成事件名
+	contentDocumentHandle: HTMLElement): void { // 挂载节点
+ 	var mountAt = contentDocumentHandle;
+    // 取到挂载节点上的所有挂载事件.
     var isListening = getListeningForDocument(mountAt);
+	// 注意此处的EventPluginRegistry.registrationNameDependencies
+	// 是一个合成事件的Map, 通过传入的registrationName
+	// 像: onClick 这样的string, 通过这个onClick键去查找对应的合成事件
+	// 想知道这个合成事件有哪些可以去到 EventPluginRegistry.js文件里具体查看
     var dependencies =
       EventPluginRegistry.registrationNameDependencies[registrationName];
-
+    // 这一步的过程实际上就是用来注册合成事件, 刚开始我也没弄懂为什么
+	// 实际上这里很聪明的把所有应用里要用到的时间注册了一遍, 这样有个好处是
+	// 不会在最上层节点上监听一堆不相关的事件, 这样也可以减少一些开销.
+	// 然后这个方法里面还通过一个trapBubbledEvent, 和trapCapturedEvent两个
+	// 方法用来注册冒泡和捕获事件.
+	// 其中, 如果要注册捕获事件, 需要给事件名上多加上Capture来标明这是一个捕获事件
+	// 例如, onClickCapture.
     for (var i = 0; i < dependencies.length; i++) {
       var dependency = dependencies[i];
-      if (
-        !(isListening.hasOwnProperty(dependency) && isListening[dependency])
-      ) {
-        if (dependency === 'topWheel') {
-          if (isEventSupported('wheel')) {
-            ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-              'topWheel',
-              'wheel',
-              mountAt,
-            );
-          } else if (isEventSupported('mousewheel')) {
-            ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-              'topWheel',
-              'mousewheel',
-              mountAt,
-            );
-          } else {
-            // Firefox needs to capture a different mouse scroll event.
-            // @see http://www.quirksmode.org/dom/events/tests/scroll.html
-            ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-              'topWheel',
-              'DOMMouseScroll',
-              mountAt,
-            );
-          }
-        } else if (dependency === 'topScroll') {
-          if (isEventSupported('scroll', true)) {
-            ReactBrowserEventEmitter.ReactEventListener.trapCapturedEvent(
-              'topScroll',
-              'scroll',
-              mountAt,
-            );
-          } else {
-            ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-              'topScroll',
-              'scroll',
-              ReactBrowserEventEmitter.ReactEventListener.WINDOW_HANDLE,
-            );
-          }
-        } else if (dependency === 'topFocus' || dependency === 'topBlur') {
-          if (isEventSupported('focus', true)) {
-            ReactBrowserEventEmitter.ReactEventListener.trapCapturedEvent(
-              'topFocus',
-              'focus',
-              mountAt,
-            );
-            ReactBrowserEventEmitter.ReactEventListener.trapCapturedEvent(
-              'topBlur',
-              'blur',
-              mountAt,
-            );
-          } else if (isEventSupported('focusin')) {
-            // IE has `focusin` and `focusout` events which bubble.
-            // @see http://www.quirksmode.org/blog/archives/2008/04/delegating_the.html
-            ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-              'topFocus',
-              'focusin',
-              mountAt,
-            );
-            ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-              'topBlur',
-              'focusout',
-              mountAt,
-            );
-          }
-
-          // to make sure blur and focus event listeners are only attached once
-          isListening.topBlur = true;
-          isListening.topFocus = true;
-        } else if (topEventMapping.hasOwnProperty(dependency)) {
-          ReactBrowserEventEmitter.ReactEventListener.trapBubbledEvent(
-            dependency,
-            topEventMapping[dependency],
-            mountAt,
-          );
-        }
-
+      // 省略一大部分代码... 
         isListening[dependency] = true;
       }
     }
 }
+// 这里仅把trapCapturedEvent给拉出来单独讲一下
+  // trapCapturedEvent 
+  var trapCapturedEvent = function(
+	topLevelType: string, 
+    handlerBaseName: string,
+    element: HTMLElement): void {
+    if (!element) {
+      return null;
+    }
+    return EventListener.capture(
+      element,
+      handlerBaseName,
+      ReactEventListener.dispatchEvent.bind(null, topLevelType),
+    );
+  }
+var capture = function capture(target: HTMLElement, 
+                               eventType: string,
+                               callback: Function): Object {
+    // 这里就是很简单的事件挂载.
+  	// 注意此处的一个挂载的callback, 是React自带的dispatchEvent.
+  	// 当事件触发时, 如: click. document接收到这个事件之后
+    // 通过触发这个callback来调用dispatch统一分发事件
+  	// 该方法返回一个remove方法. 通过这个方法来卸载事件.
+    if (target.addEventListener) {
+      target.addEventListener(eventType, callback, true);
+      return {
+        remove: function remove() {
+          target.removeEventListener(eventType, callback, true);
+        }
+      };
+    } else {
+	// return一个空方法
+      return {
+        remove: emptyFunction
+      };
+    }
+  }
 ```
 
+​    接下来就是**putListener**方法
 
+```Typescript
+function putListener(): void {
+  // 这个方法在最后是被事务通过CallbackQueue.notifyAll()方法调用
+  // 此处是通过调用函数callback.call(context, arg). 所以此处的
+  // this就是一个包含了instance对象的一个对象, 最根本的调用就是
+  // ventPluginHub.putListener
+  var listenerToPut = this;
+  EventPluginHub.putListener(
+    listenerToPut.inst,
+    listenerToPut.registrationName,
+    listenerToPut.listener)
+}
+// 注意此处的这个EventPluginHub在上面说到过是用来存储, 合成Listener的地方
+EventPluginHub.putListener = function(
+			inst: ReactDOMComponent, 
+            registrationName: string,
+            listener: Function
+            ): void {
+	// ... 省略无关代码
+  	// 生成一个rootID的key, 用来标识注册事件的对象
+    var key = getDictionaryKey(inst);
+  	// 拿到listenerBank用来存放新的listener
+    var bankForRegistrationName =
+      listenerBank[registrationName] || (listenerBank[registrationName] = {});
+    // 存储
+    bankForRegistrationName[key] = listener;
+    // 可以理解为一个对于Plugin的生命周期的函数
+    var PluginModule =
+      EventPluginRegistry.registrationNameModules[registrationName];
+    if (PluginModule && PluginModule.didPutListener) {
+      PluginModule.didPutListener(inst, registrationName, listener);
+    }
+}
+```
+
+​    到这里, 整个注册流程结束了. 通过**mountComponent**或者**updateComponent**方法把调用**_updateProperties**, 然后来把对应的事件先挂载在**Document**上, 然后把对应的处理回调放到**EventBank**里储存起来.
+
+![EventHub.png](../Eventhub.png)
 
 //.. 未完待续

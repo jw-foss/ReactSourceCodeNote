@@ -625,15 +625,24 @@ function executeDispatch(event: SyntheticEvent,
 }
 ```
 
-​    稍微来总结一下事件的派发:
+###     § 2.3.3 总结
 
-1. document监听到有注册过的DOM事件, 比如 click, mouseover.
-2. 通过唯一的响应方法`dispatch`来分发事件, 这里的`dispatch`照样是一个事务操作, 当事务处理时, 会先拿到事件触发的靶对象的所有的**祖先节点**, 然后对每一个**祖先节点**都进行相应的处理: 
-3. 首先, 从**eventBank**里通过`extractEvent`方法把对应节点注册的回调函数全部抓取出来, 然后再通过`runEventQueueInBatch`调用`processEventQueue`实际调用`executeDispatchesInOrder`方法, 用该方法来调用`executeDispatch`通过传入一个`SyntheticEvent`对象给到开发者给出的`callback`来执行.
-4. 整个响应过程结束.
-5. 如果该过程中伴随有state或者props的变化, 那么对应的会引起DOM的更新.
-6. ​
+稍微来总结一下事件的机制:
+
+1. 当应用启动时, 会把所有需要响应的事件注册在**EventHub**中, 然后把事件类型挂载在**document**对象上.
+2. **document**监听到有注册过的DOM事件, 比如 **click**, **mouseover**.
+3. 通过唯一的响应方法`dispatch`来分发事件, 这里的`dispatch`照样是一个事务操作, 当事务处理时, 会先拿到事件触发的靶对象的所有的**祖先节点**, 然后对每一个**祖先节点**都进行相应的处理: 
+4. 首先, 从**eventBank**里通过`extractEvent`方法把对应节点注册的回调函数全部抓取出来, 然后再通过`runEventQueueInBatch`调用`processEventQueue`实际调用`executeDispatchesInOrder`方法, 用该方法来调用`executeDispatch`通过传入一个`SyntheticEvent`对象给到开发者给出的`callback`来执行.
+5. 整个响应过程结束.
+6. 如果该过程中伴随有**state**或者**props**的变化, 那么对应的会引起DOM的更新.
+7. 如果根据对比结果会有更新, 那么事件将会被注销然后重新绑定到对应的**component**上, 这么做的好处是在于, 如果一个Component根据比对之后不会在存在于整个应用当中, 销毁对应的事件, 防止内存泄漏.
+8. 事件处理结束
 
 ![EventHub.png](../Eventhub.png)
 
-//.. 未完待续
+
+
+对于React这种事件处理机制, 实际上是有他本身的好处的
+
+* 统一收集事件, 统一分发.
+* 进一步的提高性能, 能更好的去处理事件响应而触发的更新操作.

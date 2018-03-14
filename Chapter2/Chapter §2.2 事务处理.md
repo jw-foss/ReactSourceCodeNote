@@ -222,9 +222,9 @@ function mountOrderComparator(c1, c2) {
 
 ```typescript
 performUpdateIfNecessary = function(
-    internalInstance,
-    transaction,
-    updateBatchNumber,
+    internalInstance: ReactComponent,
+    transaction: ReactDefaultBatchingStrategyTransaction ,
+    updateBatchNumber: number,
   ): void {
     // 比对updateBatchNumber, 注意这个地方刚刚说到的
     // updateBatchNumber就是一个更新队列的标志, 属于同一批次的更新
@@ -260,7 +260,7 @@ performUpdateIfNecessary = function(
   稍微来看一下ReactCompositeComponent 当中的performUpdateIfNecessary方法
 
 ```typescript
-performUpdateIfNecessary = function(): void {
+performUpdateIfNecessary = function(transaction: ReactDefaultBatchingStrategyTransaction): void {
     // 检查是否有处在等待队列中的Element, 如果有的话调用ReactReconciler.receiveComponent
     // 对组件更新
     if (this._pendingElement != null) {

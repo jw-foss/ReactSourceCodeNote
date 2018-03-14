@@ -292,13 +292,13 @@ var performInitialMount = function(
 
 ​	在经历完挂载阶段之后, 整个应用就已经渲染完毕, 此时的应用就是在等待用户的输入(e.g. 点击 键盘输入)来对对应的视图(View)进行更新. 因为React是一个专门针对视图(View)的框架, 那么视图(View)的更新就是非常重要的一环了,这个更新机制是React最出名的亮点并且还引发了社区大造React Like的轮子.
 
-​	在看这里之前也许你会需要知道一些关于React Transaction(事务) 的知识, 请点击 👉[React Transaction]().
+​	在看这里之前也许你会需要知道一些关于React Transaction(事务) 的知识, 请点击 👉[React Transaction](https://github.com/JeremyWuuuuu/ReactSourceCodeNote/blob/master/Chapter2/Chapter%20%C2%A72.2%20%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86.md).
 
 ​	在React应用挂载结束后, React怎么来处理一系列更新呢?  大家都知道React的组件当中有一个特别重要的类方法, 就是`setState`, 实际上更新操作也是通过这个`setState`作为更新调用入口来实现的, 关于这个方法会在后面单独的分析. setState通过调用类方法`updateComponent`来引起更新操作. 接下来看看`updateComponent`背后到底隐藏着什么吧_ (:з」∠)_.
 
 ##### 1) `<void>setState`
 
-​	首先是`setState`方法, **ReactCompositeComponent**继承了**ReactComponent**类的`setState`方法. 该方法只是通过调用updater上的入列方法, 把这次更新的变化推入队列中做处理. 关于`setState`背后的故事. 请点击 👉[React Transaction](./Chapter §2.2 事务处理.md)
+​	首先是`setState`方法, **ReactCompositeComponent**继承了**ReactComponent**类的`setState`方法. 该方法只是通过调用updater上的入列方法, 把这次更新的变化推入队列中做处理. 关于`setState`背后的故事. 请点击 👉[React Transaction](https://github.com/JeremyWuuuuu/ReactSourceCodeNote/blob/master/Chapter2/Chapter%20%C2%A72.2%20%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86.md)
 
 ```typescript
 var setState = function(partialState, callback) {

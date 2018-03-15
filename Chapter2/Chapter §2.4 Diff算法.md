@@ -370,6 +370,10 @@ dirtyComponent.push(Paragraph);
 Paragraph._pendingStateQueue.push({paragraph: "I am the paragraph that changed"});
 ```
 
+![DirtyComponent](../Resources/DirtyComponent.png)
+
+
+
 当被标记为**DirtyComponent**之后就进入到我们熟悉的[事务操作](https://github.com/JeremyWuuuuu/ReactSourceCodeNote/blob/master/Chapter2/Chapter%20%C2%A72.2%20%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86.md)环节了, 通过事务调用的`runBatchedUpdates()`方法, 当**_pendingStateQueue**不为<u>**null**</u>时, 便会调用类方法`updateComponent`
 
 ```typescript
@@ -389,5 +393,28 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
 `updateComponent`方法调用, 会去调用两个钩子函数
 
 1. 会先去调用`componentWillRecieveProps()`方法, 此时该方法能够接收到更新的**props**和**context**.
+
 2. 当调用完上一个方法之后, 下一时刻的**state**就已经被准备好, 然后会把准备好的**props**, **context**, **state**, 全部传入`shouldComponentUpdate()`方法当中, 来交给这个方法决定是否真的需要更新并根据返回结果设立是否更新标识符. 当标识符被设置为`true`, 紧接着就会进入下一步
-3. ​
+
+3. 当`shouldUpdate`这个标识符被置为`true`之后, 就会紧接着调用组件上的`componentWillUpdate(), render(), componentDidUpdate()`三个方法. 
+
+4. 然后**React**会调用组件上的`render`方法来进行重新渲染. 在这个`render`方法里, 就是**VirtualDOM**和**Diff**发挥作用的时候, 然后根据**Diff**算法对于**VirtualDOM**的**Diffing**结果来重新更新**DOM**节点.
+
+   * `shouldComponentUpdate()`方法首先会把`nextElement`和`prevElement`准备好, 其中: 
+
+   ```typescript
+   // 用更新后的props, state, context来重新render
+   var nextElement: ReactElement = instance.render();
+   // 未更新之前的的ReactElement
+   var prevElement: ReactElement = instance._renderedElement._currentElement;
+   ```
+
+
+
+
+
+
+
+![CallStack](../Resources/CallStack.png)
+
+**Inspired By [how-virtual-dom-and-diffing-works-in-react](https://medium.com/@gethylgeorge/how-virtual-dom-and-diffing-works-in-react-6fc805f9f84e)**

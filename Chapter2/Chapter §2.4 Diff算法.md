@@ -410,11 +410,57 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
    ```
 
 
-
-
-
-
+   * 对比`nextElement`和`preElement`的**Children**, 然后此时**Diff**发挥作用.
 
 ![CallStack](../Resources/CallStack.png)
 
-**Inspired By [how-virtual-dom-and-diffing-works-in-react](https://medium.com/@gethylgeorge/how-virtual-dom-and-diffing-works-in-react-6fc805f9f84e)**
+**Translate From [how-virtual-dom-and-diffing-works-in-react](https://medium.com/@gethylgeorge/how-virtual-dom-and-diffing-works-in-react-6fc805f9f84e)**          
+
+##### 3. 源码分析:
+
+节点比对发生在`ReactChildReconciler.updateChildren()`方法中.
+
+1. 遍历`nextChildren`, 然后通过`preChildren[name]`得到`prevChild`.
+
+2. 判断 `(prevChild != null && shouldUpdateReactComponent(prevElement, nextElement))` 的值, 我们之前说到的**Key**关键字在这个`shouldUpdateReactComponent`就起到了至关重要的作用
+
+   ```typescript
+   // 当key 和 type 都是同一个时, 便会返回true
+   return nextType === 'object' && 
+     prevElement.type === nextElement.type && 
+     prevElement.key === nextElement.key 
+   ```
+
+   当你对子节点设置过Key: 
+
+   ![WhenKeyIsSet](../Resources/WhenKeyIsSet.png)
+
+   当你没有对子节点设置Key: 
+
+   ![WhenNoKeySet](../Resources/WhenNoKeySet.png)
+
+   **Key**的作用就发挥在此处, 当你对子节点设置**Key**之后. 你的`children._currentElement`的键名就会和**Component**一一对应映射(**Mapping**)起来, 变成了这种格式: 
+
+   ```typescript
+   var children._currentElement = {
+     [.${key}]: Co_RespondingReactComponent
+   }
+   ```
+
+   假如你并未设置**Key**, 那么你的子节点便会是这种格式, 并且不会与对应的**Component**做映射, 这个映射过程, 是在**Mounting**阶段就会完成的
+
+   ```typescript
+   var children._currentElement = {
+     .0: ReactComponent,
+     .1: ReactComponent
+   }
+   ```
+
+   ​
+
+   * 如果判断结果是**True**则直接调用`ReactReconciler.receiveComponent()`更新对应的**Component**.
+   * 当结果是**False**, 则通过`ReactReconciler.unmountComponent()`卸载原有节点, 将这个原有节点存入`removeNodes`中 然后再构造新的节点, 通过`ReactReconciler.mountComponent()`拿到挂载的HTML片段等待推入`mountImages`, 然后把新构造的**Component**存入`nextChildren`中, 等待返回.
+
+
+
+

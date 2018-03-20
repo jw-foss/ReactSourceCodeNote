@@ -431,11 +431,11 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
      prevElement.key === nextElement.key 
    ```
 
-   当你对子节点设置过Key: 
+   当你对子节点设置过**Key**: 
 
    ![WhenKeyIsSet](../Resources/WhenKeyIsSet.png)
 
-   当你没有对子节点设置Key: 
+   当你没有对子节点设置**Key**: 
 
    ![WhenNoKeySet](../Resources/WhenNoKeySet.png)
 
@@ -461,6 +461,24 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
    * 如果判断结果是**True**则直接调用`ReactReconciler.receiveComponent()`更新对应的**Component**.
    * 当结果是**False**, 则通过`ReactReconciler.unmountComponent()`卸载原有节点, 将这个原有节点存入`removeNodes`中 然后再构造新的节点, 通过`ReactReconciler.mountComponent()`拿到挂载的HTML片段等待推入`mountImages`, 然后把新构造的**Component**存入`nextChildren`中, 等待返回.
 
+3.  当拿到了所有的`nextChildren`之后, 然后通过比对操作, 拿到需要**添加, 删除, 更新, 换位**的节点, 然后对应去DOM更新, 在这里通过代码片段来讲一下更新的策略
 
+   ```typescript
+   var nextIndex = 0, lastIndex = 0;
+   if (prevChild === nextChild) {
+     // 仅仅移动原节点, 移动之前会在这个方法里进行一个比较
+     // child._mountIndex < lastIndex 如果条件成立, 则会调用moveTo方法
+     this.moveChild(prevChild, lastPlacedNode, nextIndex, lastIndex);
+     // 更新lastIndex, 
+     lastIndex = Math.max(prevChild._mountIndex, lastIndex);
+     prevChild._mountIndex = nextIndex;
+   } else {
+     // ... 先略过
+   }
+   // 当一次比对结束, nextIndex自增.
+   nextIndex++;
+   ```
 
+   ![WithKey](../WithKey.png)
 
+   用这个图来举个例子, 此时需要将`C`和`B`的位置调换, `C`的`_mountIndex: 2`, `nextIndex: 1`, `lastIndex: 0`, 当第一次代码执行完毕之后来到循环体的第二次, 此时 `_mountIndex: 2 < 0` 为`false`, 然后`nextIndex`自增1变成2. 进入第三次循环, 此时`B._mountIndex = 1, lastIndex = 2`,  此时 `1 < 2`成立, 便会调用`moveTo `方法,  `moveTo`方法在最后调用`parentNode.insertBefore()` 这个原生方法来执行更新.

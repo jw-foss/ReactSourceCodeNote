@@ -463,6 +463,8 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
 
 3.  当拿到了所有的`nextChildren`之后, 然后通过比对操作, 拿到需要**添加, 删除, 更新, 换位**的节点, 然后对应去DOM更新, 在这里通过代码片段来讲一下更新的策略
 
+   * **当两个节点相同时**
+
    ```typescript
    var nextIndex = 0, lastIndex = 0;
    if (prevChild === nextChild) {
@@ -481,4 +483,56 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
 
    ![WithKey](../WithKey.png)
 
-   用这个图来举个例子, 此时需要将`C`和`B`的位置调换, `C`的`_mountIndex: 2`, `nextIndex: 1`, `lastIndex: 0`, 当第一次代码执行完毕之后来到循环体的第二次, 此时 `_mountIndex: 2 < 0` 为`false`, 然后`nextIndex`自增1变成2. 进入第三次循环, 此时`B._mountIndex = 1, lastIndex = 2`,  此时 `1 < 2`成立, 便会调用`moveTo `方法,  `moveTo`方法在最后调用`parentNode.insertBefore()` 这个原生方法来执行更新.
+   用这个图来举个例子, 此时需要将`C`和`B`的位置调换, `C`的`_mountIndex: 2`, `nextIndex: 1`, `lastIndex: 0`, 当第一次代码执行完毕之后来到循环体的第二次, 此时 `_mountIndex: 2 < 0` 为`false`, 然后`nextIndex`自增1变成2. 进入第三次循环, 此时`B._mountIndex = 1, lastIndex = 2`,  此时 `1 < 2`成立, 便会调用`moveTo `方法,  `moveTo`方法在最后调用`parentNode.insertBefore(childNode, referenceNode)` 这个原生方法来执行更新.
+
+   * **当两个元素不同时 在对应位置插入新的节点**
+
+   ```typescript
+   if (prevChild !== nextChild) { // 这里就是上面的else 分支
+     if (prevChild) {
+         // Update `lastIndex` before `_mountIndex` gets unset by unmounting.
+         lastIndex = Math.max(prevChild._mountIndex, lastIndex);
+         // The `removedNodes` loop below will actually remove the child.
+         }
+     	  // 当前后两个child不一样, 便会通过这个地方, 实例化新的组件节点
+     	  // 然后把它推入更新队列
+         updates = enqueue(
+           updates,
+           this._mountChildAtIndex(
+             nextChild,
+             mountImages[nextMountIndex],
+             lastPlacedNode,
+             nextIndex,
+             transaction,
+             context,
+           ),
+         );
+     	  // 
+         nextMountIndex++;
+   }
+   ```
+
+   * **销毁不存在的节点**
+
+   ```typescript
+   for (name in removedNodes) {
+       if (removedNodes.hasOwnProperty(name)) {
+         updates = enqueue(
+           updates,
+           this._unmountChild(prevChildren[name], removedNodes[name]),
+         );
+       }
+     }
+   ```
+
+   * **处理队列**
+
+   ```typescript
+   processQueue(updates); //所有实际的DOM操作就在这个里面通过一个Case Match去匹配到底调用那种操作, 是移除还是添加还是换位.
+   ```
+
+4. 自此, 更新阶段结束, 应用等待下一次的更新通知.
+
+   ​
+
+   ​

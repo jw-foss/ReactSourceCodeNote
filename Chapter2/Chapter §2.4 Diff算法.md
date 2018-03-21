@@ -533,6 +533,10 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
 
 4. 自此, 更新阶段结束, 应用等待下一次的更新通知.
 
-   ​
 
-   ​
+
+### § 2.4.4 Reference 
+
+* **[React 源码剖析系列 － 不可思议的 react diff](https://zhuanlan.zhihu.com/p/20346379)**
+* **[How Virtual-DOM and diffing works in React](https://medium.com/@gethylgeorge/how-virtual-dom-and-diffing-works-in-react-6fc805f9f84e)**
+

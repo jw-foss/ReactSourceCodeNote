@@ -311,7 +311,7 @@ updates 是由下面这种类型的对象组成的一个数组. 上面的方法�
 首先需要来看一张图片, 有关于浏览器的工作原理: 
 
 
-![](../Resources/How-HTML-Displayed.png)
+![](../resources/How-HTML-Displayed.png)
 
 图片来自 **Mozilla — <https://developer.mozilla.org/en-US/docs/Introduction_to_Layout_in_Mozilla**>
 
@@ -323,7 +323,7 @@ updates 是由下面这种类型的对象组成的一个数组. 上面的方法�
    *  根据指令改变, 然后把DOM结构更新
    *  重新绘制
 
-![PantingFlow](../Resources/PaintingFlow.png)
+![PantingFlow](../resources/PaintingFlow.png)
 
 当**DOM**结构变更时, **DOM**被表示为树形结构, 更新**DOM**对象这个速度是很快的, 但是页面的重绘过程相对这个操作来说要慢很多, **React**所做的工作就是通过他的比对操作, 让更新操作变成批量更新(**Batching Update**).
 
@@ -334,11 +334,11 @@ updates 是由下面这种类型的对象组成的一个数组. 上面的方法�
 
 首先通过一段非常简单的代码
 
-![App](../Resources/App.png)
+![App](../resources/App.png)
 
 **DOMStructure**
 
-![DOMStructure](../Resources/DOMStructure.png)
+![DOMStructure](../resources/DOMStructure.png)
 
 ```html
 <!-- DOM Structure -->
@@ -370,7 +370,7 @@ dirtyComponent.push(Paragraph);
 Paragraph._pendingStateQueue.push({paragraph: "I am the paragraph that changed"});
 ```
 
-![DirtyComponent](../Resources/DirtyComponent.png)
+![DirtyComponent](../resources/DirtyComponent.png)
 
 
 
@@ -412,7 +412,7 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
 
    * 对比`nextElement`和`preElement`的**Children**, 然后此时**Diff**发挥作用.
 
-![CallStack](../Resources/CallStack.png)
+![CallStack](../resources/CallStack.png)
 
 **Translate From [how-virtual-dom-and-diffing-works-in-react](https://medium.com/@gethylgeorge/how-virtual-dom-and-diffing-works-in-react-6fc805f9f84e)**          
 
@@ -433,11 +433,11 @@ if (this._pendingStateQueue !== null || this._pendingForceUpdate) {
 
    当你对子节点设置过**Key**: 
 
-   ![WhenKeyIsSet](../Resources/WhenKeyIsSet.png)
+   ![WhenKeyIsSet](../resources/WhenKeyIsSet.png)
 
    当你没有对子节点设置**Key**: 
 
-   ![WhenNoKeySet](../Resources/WhenNoKeySet.png)
+   ![WhenNoKeySet](../resources/WhenNoKeySet.png)
 
    **Key**的作用就发挥在此处, 当你对子节点设置**Key**之后. 你的`children._currentElement`的键名就会和**Component**一一对应映射(**Mapping**)起来, 变成了这种格式: 
 
